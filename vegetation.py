@@ -1,19 +1,23 @@
 import numpy as np
 import cv2
+import tensorflow as tf
 import copy
+import os
 from os import listdir
 from os.path import isfile, join
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+
 
 def getvegetation():
-    onlyfiles = [f for f in listdir('demo/china/imgs') if isfile(join('demo/china/imgs', f))]
+    onlyfiles = [f for f in listdir('demo/bolivia/imgs') if isfile(join('demo/bolivia/imgs', f))]
     print("FIles: ", onlyfiles)
     for file in onlyfiles:
-        print("File: ",file)
-        img = cv2.imread('demo/china/imgs/'+file)
+        print("File: ", file)
+        img = cv2.imread('demo/bolivia/imgs/' + file)
 
-        upperbound = np.array([90, 255, 255])
-        lowerbound = np.array([40, 36, 25])
+        upperbound = np.array([70, 255, 255])
+        lowerbound = np.array([40, 40, 40])
         # HSV UPPER (100,255,255) DOWN (40,36,25)
         mask = cv2.inRange(img, lowerbound, upperbound)
         # print(mask.shape)
@@ -26,38 +30,53 @@ def getvegetation():
 
         blur = cv2.GaussianBlur(image, (9, 9), 0)
         _, thr = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        cv2.imwrite('demo/china/whitemap/'+file, thr)
+        cv2.imwrite('demo/bolivia/whitemap/' + file, thr)
 
 
 def createOverlay():
-    onlyfiles = [f for f in listdir('demo/china/whitemap') if isfile(join('demo/china/whitemap', f))]
+    onlyfiles = [f for f in listdir('demo/bolivia/whitemap') if isfile(join('demo/bolivia/whitemap', f))]
     for file in onlyfiles:
-        img = cv2.imread('demo/china/whitemap/'+file)
-        fullimg = cv2.imread('demo/china/imgs/'+file)
-        print("Shape: ", img.shape)
-        mask = np.array(img, dtype=np.float)
+        colorImg = cv2.imread('demo/bolivia/imgs/' + file)
+        img = np.array(colorImg, dtype=np.float)
+        img /= 255.0
+        cv2.imshow('img', img)
+        cv2.waitKey(0)
+
+        whiteImg = cv2.imread('demo/bolivia/whitemap/' + file)
+        mask = np.array(whiteImg, dtype=np.float)
         mask /= 255.0
+        # set transparency to 25%
         transparency = .25
         mask *= transparency
-        overlayed = copy.deepcopy(fullimg)
-
-        green = np.ones(overlayed.shape, dtype=np.float) * (0, 1, 0)
-        print(green.shape, mask.shape, overlayed.shape)
-        out = green * mask + fullimg * (1.0 - mask)
-        print(type(img))
-
-        # backtorgb = cv2.cvtColor(thr, cv2.COLOR_GRAY2RGB)
-        # backtorgb[np.all(backtorgb == (255, 255, 255), axis=-1)] = (0, 255, 0)
-        # overlayed[thr == 255] = (36, 255, 12)
-        # added_image = cv2.addWeighted(img, 0.4, overlayed, 0.1, 0)
-
-        # cv2.imshow(winname='satellite image', mat=img)
-
-        cv2.imshow(winname='Overlay', mat=out)
-        # cv2.imshow('vegetation detection', result)
-
-        # cv2.imshow('Blur', thr)
-
+        cv2.imshow('Mask', mask)
         cv2.waitKey(0)
+
+        green = np.ones(img.shape, dtype=np.float) * (0, 1, 0)
+        out = green * mask + img * (1.0 - mask)
+        cv2.imshow('Out', out)
+        cv2.waitKey(0)
+
+        # cv2.imshow(winname='Overlay', mat=out)
+        # cv2.waitKey(0)
         cv2.destroyAllWindows()
 
+
+def pediction():
+    start_img = cv2.imread('demo/bolivia/whitemap/bol1.jpg', cv2.IMREAD_GRAYSCALE)
+    end_img = cv2.imread('demo/bolivia/whitemap/bol7.jpg', cv2.IMREAD_GRAYSCALE)
+
+    xs = tf.convert_to_tensor(start_img, dtype=tf.float32)
+    ys = tf.convert_to_tensor(end_img, dtype=tf.float32)
+    # print(xs)
+    #
+    model = tf.keras.Sequential([
+        tf.keras.layers.LSTM(units=32),
+        # tf.keras.layers.Dense(512, activation='relu'),
+        tf.keras.layers.Dense(1)
+    ])
+    model.compile(optimizer='sgd', loss='mean_squared_error')
+    #
+    model.fit(xs, ys, epochs=500)
+    #
+    # results = model.predict(end_img)
+    # print(results)

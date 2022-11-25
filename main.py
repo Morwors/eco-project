@@ -6,7 +6,7 @@ import vegetation
 # print(cv.__version__)
 
 # vegetation.getvegetation()
-vegetation.createOverlay()
+vegetation.pediction()
 
 # image = cv2.imread('demo/img4.JPG')
 #
