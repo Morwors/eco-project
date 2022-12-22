@@ -1,28 +1,35 @@
-import tensorflow as tf
-import cv2 as cv2
-import numpy as np
-import vegetation
+import prediction.prediction
+import vegetation.vegetation
+import inquirer
 
-# print(cv.__version__)
+while True:
+    questions = [
+        inquirer.List('choice',
+                      message="Choose Country?",
+                      choices=['bolivia', 'china', 'exit'],
+                      ),
+    ]
+    answers = inquirer.prompt(questions)
+    country = answers['choice']
+    if country == 'exit':
+        break
+    questions = [
+        inquirer.List('choice',
+                      message="Choose Action?",
+                      choices=['find vegetation', 'show vegetation', 'predict', 'create model'],
+                      ),
+    ]
+    answers = inquirer.prompt(questions)
 
-# vegetation.getvegetation()
-vegetation.pediction()
-
-# image = cv2.imread('demo/img4.JPG')
-#
-# hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-# mask = cv2.inRange(hsv, (40, 25, 25), (70, 255,255))
-#
-# cv2.imshow('Original', image)
-# cv2.waitKey(0)
-#
-# imask = mask>0
-# green = np.zeros_like(image, np.uint8)
-# green[imask] = image[imask]
-#
-#
-# cv2.imshow('Greenscale', green)
-# cv2.waitKey(0)
-#
-# cv2.destroyAllWindows()
+    action = answers['choice']
+    if action == "find vegetation":
+        vegetation.vegetation.getvegetation(country)
+    if action == "show vegetation":
+        vegetation.vegetation.createOverlay(country)
+    if action =="predict":
+        imgs = vegetation.vegetation.convertImgsToArrays(country)
+        img = imgs[len(imgs)-1]
+        prediction.prediction.predictFutureVegetation(img, country)
+    if action == "create model":
+        prediction.prediction.teachModel(vegetation.vegetation.convertImgsToArrays(country),country)
 

@@ -1,2 +1,7 @@
 tensorflow~=2.9.1
 opencv-python~=4.6.0.66
+numpy~=1.22.3
+inquirer~=3.0.0
+keras~=2.9.0
+matplotlib~=3.6.2
+sklearn~=0.0.post1
