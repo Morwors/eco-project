@@ -68,6 +68,7 @@ def predictFutureVegetation(inputImgArr, country):
         result = model.predict(inputImgArr)
         result = np.round(result * 255.0)
         result[result > 255.0] = 255.0
+        print("Got result: ",)
         cv2.imwrite('demo/'+country+'/whitemap/prediction.jpg', result)
         return True
     except:
